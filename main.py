@@ -39,7 +39,6 @@ def main():
             data = {'message': message}
             requests.post(line_notify_api, headers=headers, data=data)
             previous_trend = current_trend
-        print("Notification process triggered")
         time.sleep(60)
 if __name__ == '__main__':
     port = int(os.environ.get('PORT', 5000))
