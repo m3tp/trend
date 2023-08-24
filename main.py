@@ -18,7 +18,7 @@ previous_trend = None
 def main():
     global previous_trend
     while True:
-        data = yf.download('AUDJPY=X', period='1d', interval='1m', ignore_tz=False, auto_adjust=True, actions=False,progress=True)
+        data = yf.download('AUDJPY=X', period='1d', interval='1m', ignore_tz=False, auto_adjust=True, actions=False,progress=False)
         data.index = data.index.tz_convert(jst)
         data = data[['Open', 'High', 'Low', 'Close']]
         data.index = data.index.tz_localize(None)
