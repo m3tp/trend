@@ -3,8 +3,8 @@ from pytz import timezone
 import yfinance as yf
 import pandas as pd
 import requests
+import threading
 import time
-import os
 
 app = Flask(__name__)
 
@@ -14,10 +14,10 @@ line_notify_api = 'https://notify-api.line.me/api/notify'
 headers = {'Authorization': f'Bearer {line_notify_token}'}
 previous_trend = None
 
-@app.route('/')
-def main():
+def check_trend():
+    global previous_trend
     while True:
-        data = yf.download('AUDJPY=X', period='1d', interval='1m', ignore_tz=False, auto_adjust=True, actions=False,progress=False)
+        data = yf.download('AUDJPY=X', period='1d', interval='1m', ignore_tz=False, auto_adjust=True, actions=False, progress=False)
         data.index = data.index.tz_convert(jst)
         data = data[['Open', 'High', 'Low', 'Close']]
         data.index = data.index.tz_localize(None)
@@ -34,12 +34,21 @@ def main():
             current_trend = "トレンドの判定が難しい"
         
         if current_trend != previous_trend:
-            message = f"新しいトレンド: {current_trend}"
+            message = f"AUDJPY_15m: {current_trend}"
             data = {'message': message}
             requests.post(line_notify_api, headers=headers, data=data)
             previous_trend = current_trend
         
-        time.sleep(60)
+        time.sleep(60)  # 60秒待機
+
+@app.route('/')
+def index():
+    return "Welcome to the trend checker!"
+
 if __name__ == '__main__':
-    port = int(os.environ.get('PORT', 5000))
-    app.run(host='0.0.0.0', port=port)
+    # トレンドチェックを別スレッドで実行
+    trend_thread = threading.Thread(target=check_trend)
+    trend_thread.daemon = True  # メインスレッドが終了したらトレンドチェックスレッドも終了
+    trend_thread.start()
+
+    app.run(debug=True)
